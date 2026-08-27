@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="/manifest.json"><title>Morning News Highlights</title>
+<style>
+body{margin:0;background:#f4f6f8;color:#172033;font-family:system-ui,sans-serif}header{background:#111827;color:#fff;padding:28px 18px}
+header>*{max-width:900px;margin:6px auto}main{max-width:900px;margin:18px auto;padding:0 14px}.card{background:#fff;border:1px solid #ddd;border-radius:16px;padding:18px;margin:14px 0}
+button{padding:11px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer}.secondary{background:#fff;color:#172033;border:1px solid #ddd}
+.story{border-top:1px solid #eee;padding:14px 0}.story:first-child{border:0}.story p{color:#4b5563;line-height:1.5}.story a{color:#2563eb;font-weight:700}
+</style></head><body>
+<header><div>Daily briefing</div><h1>🌅 Morning News Highlights</h1><div id="date"></div></header>
+<main><div class="card"><button id="notify">🔔 Enable Morning Notifications</button> <button id="refresh" class="secondary">↻ Refresh</button>
+<p>Enable notifications once. Your deployed app can then send “Your Morning News is Ready” each morning.</p></div>
+<div id="content"><div class="card">Loading today's briefing…</div></div></main>
+<script>
+const $=s=>document.querySelector(s); $("#date").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+async function load(){try{const r=await fetch("/api/briefing");if(!r.ok)throw 0;const b=await r.json();$("#content").innerHTML=b.sections.map(x=>`<section class="card"><h2>${x.icon} ${x.title}</h2>${x.stories.map(s=>`<article class="story"><h3>${esc(s.title)}</h3><p>${esc(s.summary)}</p><a href="${s.url}" target="_blank" rel="noopener">Read full story →</a></article>`).join("")}</section>`).join("")}catch(e){$("#content").innerHTML='<div class="card">The briefing is not available yet.</div>'}}
+function key(s){let p="=".repeat((4-s.length%4)%4),r=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))}
+$("#notify").onclick=async()=>{if(!("Notification"in window))return alert("This browser does not support notifications.");const p=await Notification.requestPermission();if(p!=="granted")return;const reg=await navigator.serviceWorker.ready;const k=await fetch("/api/vapid-public-key").then(r=>r.text());const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key(k)});await fetch("/api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(sub)});alert("Morning notifications are enabled.")};
+$("#refresh").onclick=load;navigator.serviceWorker.register("/sw.js");load();
+</script></body></html>

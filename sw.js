@@ -1,0 +1,2 @@
+self.addEventListener('push',e=>{const d=e.data?e.data.json():{};e.waitUntil(self.registration.showNotification(d.title||'Your Morning News is Ready',{body:d.body||'Your morning briefing is ready.',tag:'morning-news'}))});
+self.addEventListener('notificationclick',e=>{e.notification.close();e.waitUntil(clients.openWindow('/'))});
