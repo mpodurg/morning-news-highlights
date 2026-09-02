@@ -1,7 +1,7 @@
 const express=require('express'),webpush=require('web-push'),Parser=require('rss-parser'),fs=require('fs');
 const app=express(),parser=new Parser(),file='subscriptions.json';let subs=fs.existsSync(file)?JSON.parse(fs.readFileSync(file)):[],
 feeds={us:'https://news.google.com/rss/headlines/section/topic/NATION?hl=en-US&gl=US&ceid=US:en',world:'https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en',tech:'https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-US&gl=US&ceid=US:en',local:'https://news.google.com/rss/search?q=Ponca%20City%20Oklahoma&hl=en-US&gl=US&ceid=US:en'};
-webpush.setVapidDetails(process.env.VAPID_SUBJECT,process.env.VAPID_PUBLIC_KEY,process.env.VAPID_PRIVATE_KEY);
+if(process.env.VAPID_SUBJECT&&process.env.VAPID_PUBLIC_KEY&&process.env.VAPID_PRIVATE_KEY){webpush.setVapidDetails(process.env.VAPID_SUBJECT,process.env.VAPID_PUBLIC_KEY,process.env.VAPID_PRIVATE_KEY);}
 app.use(express.json());app.use(express.static('public'));
 async function getFeed(url){return(await parser.parseURL(url)).items.slice(0,8)}
 async function build(){const [us,world,tech,local]=await Promise.all(Object.values(feeds).map(getFeed));
