@@ -7,7 +7,7 @@ async function getFeed(url){return(await parser.parseURL(url)).items.slice(0,8)}
 async function build(){const [us,world,tech,local]=await Promise.all(Object.values(feeds).map(getFeed));
 const make=(title,icon,a)=>({title,icon,stories:a.slice(0,5).map(x=>({title:x.title,summary:(x.contentSnippet||x.content||'').replace(/\s+/g,' ').slice(0,320)||'Read the full story for details.',url:x.link}))});
 return{sections:[make('Top Stories','⭐',[...us.slice(0,3),...world.slice(0,3),...tech.slice(0,2)]),make('U.S. News','🇺🇸',us),make('World News','🌎',world),make('Technology','💻',tech),make('Local News','📍',local)]}}
-app.get('/api/vapid-public-key',(q,r)=>r.send(process.env.VAPID_PUBLIC_KEY||''));app.get('/api/briefing',async(q,r)=>{try{r.json(await build())}catch(e){console.error(e);r.sendStatus(500)}});
+app.use(express.static(__dirname));
 app.post('/api/subscribe',(q,r)=>{if(q.body?.endpoint&&!subs.some(s=>s.endpoint===q.body.endpoint)){subs.push(q.body);fs.writeFileSync(file,JSON.stringify(subs,null,2))}r.sendStatus(201)});
 app.post('/api/send',async(q,r)=>{try{const b=await build(),top=b.sections[0].stories[0],payload=JSON.stringify({title:'Your Morning News is Ready',body:top?top.title:'Your morning briefing is ready.'});const results=await Promise.allSettled(subs.map(s=>webpush.sendNotification(s,payload)));subs=subs.filter((s,i)=>results[i].status==='fulfilled'||results[i].reason?.statusCode!==404);fs.writeFileSync(file,JSON.stringify(subs,null,2));r.sendStatus(201)}catch(e){console.error(e);r.sendStatus(500)}});
 app.listen(process.env.PORT||3000,()=>console.log('Morning News running'));
